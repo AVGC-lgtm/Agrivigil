@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -23,66 +23,72 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, MapPin, Cpu, QrCode, RefreshCw } from "lucide-react";
+import { Camera, MapPin, Cpu, QrCode, RefreshCw, Edit, Trash2, Plus } from "lucide-react";
+import { inspectionAPI } from "@/lib/api";
+
+interface InspectionTask {
+  id: string;
+  inspectioncode: string;
+  userId: string;
+  datetime: string;
+  state: string;
+  district: string;
+  taluka: string;
+  location: string;
+  addressland: string;
+  targetType: string;
+  typeofpremises: string[];
+  visitpurpose: string[];
+  equipment: string[];
+  totaltarget: string;
+  achievedtarget: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+}
 
 export default function InspectionPlanningModule() {
   const { toast } = useToast();
-  const [inspections, setInspections] = useState([
-    {
-      id: "450001",
-      officerCode: "00001",
-      officerName: "Priya Sharma",
-      visitDateTime: "31-07-2025 1:30 PM",
-      district: "Pune",
-      taluka: "Pune City",
-      area: "Mandai",
-      targetType: "Retailer",
-      visitPurpose: ["Routine"],
-      totalTarget: 10,
-      targetAchieved: 10,
-      status: "Completed",
-      assignedEquipment: ["TruScan Device", "Gemini Analyzer", "Axon Body Cam"],
-    },
-    {
-      id: "450002",
-      officerCode: "00002",
-      officerName: "Suresh Patil",
-      visitDateTime: "31-07-2025 1:30 PM",
-      district: "Pune",
-      taluka: "Pune City",
-      area: "Sadashiv Peth",
-      targetType: "Distributor",
-      visitPurpose: ["Routine"],
-      totalTarget: 10,
-      targetAchieved: 9,
-      status: "In Progress",
-      assignedEquipment: ["TruScan Device", "Gemini Analyzer", "Axon Body Cam"],
-    },
-  ]);
+  const [inspections, setInspections] = useState<InspectionTask[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshLoading, setRefreshLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    officerCode: "",
-    visitDateTime: "",
+    inspectioncode: "",
+    datetime: "",
+    state: "Maharashtra",
     district: "",
     taluka: "",
     location: "",
-    address: "",
+    addressland: "",
     targetType: "",
-    premisesTypes: [] as string[],
-    visitPurpose: [] as string[],
-    assignedEquipment: [] as string[],
-    totalTarget: 10,
+    typeofpremises: [] as string[],
+    visitpurpose: [] as string[],
+    equipment: [] as string[],
+    totaltarget: "10",
   });
 
-  const [loading, setLoading] = useState(false);
-  const [refreshLoading, setRefreshLoading] = useState(false);
+  // Filter states
+  const [filters, setFilters] = useState({
+    status: "all",
+    district: "all",
+    taluka: "all",
+    targetType: "all",
+    dateFrom: "",
+    dateTo: "",
+  });
 
-  const districts = ["Pune", "Mumbai", "Nagpur"];
-  const talukas = ["Pune City", "Hinjewadi", "Shivaji Nagar"];
-  const officers = [
-    { name: "Priya Sharma", code: "00001" },
-    { name: "Suresh Patil", code: "00002" },
-  ];
+  const districts = ["Pune", "Mumbai", "Nagpur", "Aurangabad", "Solapur"];
+  const talukas = ["Pune City", "Hinjewadi", "Shivaji Nagar", "Koregaon Park", "Kharadi"];
+  const states = ["Maharashtra", "Delhi", "Karnataka", "Tamil Nadu"];
 
   const targetTypes = [
     {
@@ -99,6 +105,11 @@ export default function InspectionPlanningModule() {
       value: "warehouse",
       label: "Warehouse",
       description: "Storage facility inspection",
+    },
+    {
+      value: "manufacturer",
+      label: "Manufacturer",
+      description: "Manufacturing unit inspection",
     },
     {
       value: "market-survey",
@@ -126,22 +137,56 @@ export default function InspectionPlanningModule() {
     "Follow-up",
     "Sample Collection",
     "Licensing",
+    "Verification",
   ];
 
   const equipmentList = [
     { name: "TruScan Device", icon: <QrCode className="w-5 h-5" /> },
     { name: "Gemini Analyzer", icon: <Cpu className="w-5 h-5" /> },
-    { name: "Axon Body Cam", icon: <Camera className="w-5 h-5" /> },
+    { name: "Axon Body Cam", icon: <Camera className="w-5 h-4" /> },
     { name: "GPS Tracker", icon: <MapPin className="w-5 h-5" /> },
+    { name: "Sample Collection Kit", icon: <Cpu className="w-5 h-5" /> },
   ];
 
+  // Load inspections on component mount
+  useEffect(() => {
+    loadInspections();
+  }, []);
+
+  const loadInspections = async () => {
+    try {
+      setLoading(true);
+      // Convert "all" values to undefined for API calls
+      const apiFilters = Object.fromEntries(
+        Object.entries(filters).map(([key, value]) => [
+          key, 
+          value === "all" ? undefined : value
+        ]).filter(([_, value]) => value !== undefined)
+      );
+      
+      const data = await inspectionAPI.getInspections(apiFilters);
+      setInspections(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to load inspections",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleInputChange = (field: string, value: string | string[] | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({ 
+      ...prev, 
+      [field]: value === undefined ? "" : value 
+    }));
   };
 
   const handleCheckboxChange = (field: string, value: string, checked: boolean) => {
     setFormData(prev => {
-      const currentValues = prev[field as keyof typeof prev] as string[];
+      const currentValues = prev[field as keyof typeof prev] as string[] || [];
       const newValues = checked 
         ? [...currentValues, value] 
         : currentValues.filter(item => item !== value);
@@ -149,30 +194,93 @@ export default function InspectionPlanningModule() {
     });
   };
 
-  const handleRefreshInspections = () => {
-    setRefreshLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      toast({
-        title: "Inspections Refreshed",
-        description: "Latest inspection data has been loaded.",
-      });
-      setRefreshLoading(false);
-    }, 1000);
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters(prev => ({ 
+      ...prev, 
+      [field]: value === undefined ? "all" : value 
+    }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleRefreshInspections = async () => {
+    setRefreshLoading(true);
+    await loadInspections();
+    toast({
+      title: "Inspections Refreshed",
+      description: "Latest inspection data has been loaded.",
+    });
+    setRefreshLoading(false);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      inspectioncode: "",
+      datetime: "",
+      state: "Maharashtra",
+      district: "",
+      taluka: "",
+      location: "",
+      addressland: "",
+      targetType: "",
+      typeofpremises: [],
+      visitpurpose: [],
+      equipment: [],
+      totaltarget: "10",
+    });
+    setIsEditing(false);
+    setEditingId(null);
+  };
+
+  const handleEdit = (inspection: InspectionTask) => {
+    setFormData({
+      inspectioncode: inspection.inspectioncode || "",
+      datetime: inspection.datetime || "",
+      state: inspection.state || "Maharashtra",
+      district: inspection.district || "",
+      taluka: inspection.taluka || "",
+      location: inspection.location || "",
+      addressland: inspection.addressland || "",
+      targetType: inspection.targetType || "",
+      typeofpremises: inspection.typeofpremises || [],
+      visitpurpose: inspection.visitpurpose || [],
+      equipment: inspection.equipment || [],
+      totaltarget: inspection.totaltarget || "10",
+    });
+    setIsEditing(true);
+    setEditingId(inspection.id);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this inspection?")) {
+      return;
+    }
+
+    try {
+      await inspectionAPI.deleteInspection(id);
+      toast({
+        title: "Success",
+        description: "Inspection deleted successfully.",
+      });
+      await loadInspections();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete inspection",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Validate required fields
+    // Validate required fields - check for empty strings and undefined values
     if (
-      !formData.officerCode ||
-      !formData.visitDateTime ||
-      !formData.district ||
-      !formData.taluka ||
-      !formData.location ||
-      !formData.targetType
+      !formData.datetime?.trim() ||
+      !formData.district?.trim() ||
+      !formData.taluka?.trim() ||
+      !formData.location?.trim() ||
+      !formData.targetType?.trim()
     ) {
       toast({
         title: "Validation Error",
@@ -184,7 +292,7 @@ export default function InspectionPlanningModule() {
     }
 
     // Validate visit date is not in the past
-    const selectedDate = new Date(formData.visitDateTime);
+    const selectedDate = new Date(formData.datetime);
     const now = new Date();
     if (selectedDate < now) {
       toast({
@@ -196,55 +304,88 @@ export default function InspectionPlanningModule() {
       return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      const newInspection = {
-        id: `45000${inspections.length + 1}`,
-        officerCode: formData.officerCode,
-        officerName: officers.find(o => o.code === formData.officerCode)?.name || "Unknown",
-        visitDateTime: new Date(formData.visitDateTime).toLocaleString(),
-        district: formData.district,
-        taluka: formData.taluka,
-        area: formData.location,
-        targetType: formData.targetType,
-        visitPurpose: formData.visitPurpose,
-        totalTarget: formData.totalTarget,
-        targetAchieved: 0,
-        status: "Scheduled",
-        assignedEquipment: formData.assignedEquipment,
-      };
+    try {
+      if (isEditing && editingId) {
+        // Update existing inspection
+        await inspectionAPI.updateInspection(editingId, {
+          datetime: formData.datetime,
+          state: formData.state,
+          district: formData.district,
+          taluka: formData.taluka,
+          location: formData.location,
+          addressland: formData.addressland || "",
+          targetType: formData.targetType,
+          typeofpremises: formData.typeofpremises,
+          visitpurpose: formData.visitpurpose,
+          equipment: formData.equipment,
+          totaltarget: formData.totaltarget,
+        });
 
-      setInspections(prev => [newInspection, ...prev]);
-      
+        toast({
+          title: "Success",
+          description: "Inspection updated successfully.",
+        });
+      } else {
+        // Create new inspection
+        await inspectionAPI.createInspection({
+          inspectioncode: formData.inspectioncode?.trim() || undefined,
+          datetime: formData.datetime,
+          state: formData.state,
+          district: formData.district,
+          taluka: formData.taluka,
+          location: formData.location,
+          addressland: formData.addressland?.trim() || "",
+          targetType: formData.targetType,
+          typeofpremises: formData.typeofpremises,
+          visitpurpose: formData.visitpurpose,
+          equipment: formData.equipment,
+          totaltarget: formData.totaltarget,
+        });
+
+        toast({
+          title: "Success",
+          description: "New inspection has been successfully created.",
+        });
+      }
+
+      resetForm();
+      await loadInspections();
+    } catch (error) {
       toast({
-        title: "Inspection Scheduled",
-        description: "New inspection has been successfully created.",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save inspection",
+        variant: "destructive",
       });
-
-      // Reset form
-      setFormData({
-        officerCode: "",
-        visitDateTime: "",
-        district: "",
-        taluka: "",
-        location: "",
-        address: "",
-        targetType: "",
-        premisesTypes: [],
-        visitPurpose: [],
-        assignedEquipment: [],
-        totalTarget: 10,
-      });
-
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    try {
+      if (!dateString) return "N/A";
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Invalid Date";
+      
+      return date.toLocaleString('en-IN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return "Invalid Date";
+    }
   };
 
   return (
     <div className="p-4">
       <Tabs defaultValue="planning" className="w-full">
         <TabsList className="grid grid-cols-2 w-full mb-4">
-          <TabsTrigger value="planning">Inspection Planning</TabsTrigger>
+          <TabsTrigger value="planning">
+            {isEditing ? "Edit Inspection" : "Create Inspection"}
+          </TabsTrigger>
           <TabsTrigger value="scheduled">Scheduled Inspections</TabsTrigger>
         </TabsList>
 
@@ -252,62 +393,63 @@ export default function InspectionPlanningModule() {
         <TabsContent value="planning">
           <Card>
             <CardHeader>
-              <CardTitle>Create Inspection</CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle>
+                  {isEditing ? "Edit Inspection" : "Create New Inspection"}
+                </CardTitle>
+                {isEditing && (
+                  <Button variant="outline" onClick={resetForm}>
+                    Cancel Edit
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="grid gap-4">
                 <div>
                   <Label>Inspection Code</Label>
-                  <Input placeholder="Auto-generated" readOnly />
-                </div>
-
-                <div>
-                  <Label>Officer Code *</Label>
-                  <Select
-                    value={formData.officerCode}
-                    onValueChange={(value) => handleInputChange("officerCode", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Officer Code" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {officers.map((o) => (
-                        <SelectItem key={o.code} value={o.code}>
-                          {o.code} - {o.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input 
+                    placeholder="Auto-generated if left empty" 
+                    value={formData.inspectioncode}
+                    onChange={(e) => handleInputChange("inspectioncode", e.target.value)}
+                  />
                 </div>
 
                 <div>
                   <Label>Visit Date & Time *</Label>
                   <Input
                     type="datetime-local"
-                    value={formData.visitDateTime}
+                    value={formData.datetime}
                     onChange={(e) =>
-                      handleInputChange("visitDateTime", e.target.value)
+                      handleInputChange("datetime", e.target.value)
                     }
                   />
                 </div>
 
-                <div>
-                  <Label>State</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select State" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Maharashtra">Maharashtra</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>State</Label>
+                    <Select
+                      value={formData.state || "Maharashtra"}
+                      onValueChange={(value) => handleInputChange("state", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select State" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {states.map((state) => (
+                          <SelectItem key={state} value={state}>
+                            {state}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label>District *</Label>
                     <Select
-                      value={formData.district}
+                      value={formData.district || ""}
                       onValueChange={(value) =>
                         handleInputChange("district", value)
                       }
@@ -324,11 +466,13 @@ export default function InspectionPlanningModule() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
 
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Taluka *</Label>
                     <Select
-                      value={formData.taluka}
+                      value={formData.taluka || ""}
                       onValueChange={(value) =>
                         handleInputChange("taluka", value)
                       }
@@ -350,7 +494,7 @@ export default function InspectionPlanningModule() {
                     <Label>Location / Village *</Label>
                     <Input
                       placeholder="Enter Location / Village"
-                      value={formData.location}
+                      value={formData.location || ""}
                       onChange={(e) =>
                         handleInputChange("location", e.target.value)
                       }
@@ -362,9 +506,9 @@ export default function InspectionPlanningModule() {
                   <Label>Address / Landmark</Label>
                   <Input
                     placeholder="Enter Address or Landmark"
-                    value={formData.address}
+                    value={formData.addressland || ""}
                     onChange={(e) =>
-                      handleInputChange("address", e.target.value)
+                      handleInputChange("addressland", e.target.value)
                     }
                   />
                 </div>
@@ -372,7 +516,7 @@ export default function InspectionPlanningModule() {
                 <div>
                   <Label>Target Type *</Label>
                   <Select
-                    value={formData.targetType}
+                    value={formData.targetType || ""}
                     onValueChange={(value) =>
                       handleInputChange("targetType", value)
                     }
@@ -396,16 +540,16 @@ export default function InspectionPlanningModule() {
                     {premisesTypes.map((prem, i) => (
                       <div key={i} className="flex items-center gap-2">
                         <Checkbox
-                          checked={formData.premisesTypes.includes(prem)}
+                          checked={formData.typeofpremises.includes(prem)}
                           onCheckedChange={(checked) =>
                             handleCheckboxChange(
-                              "premisesTypes",
+                              "typeofpremises",
                               prem,
                               checked as boolean
                             )
                           }
-                        />{" "}
-                        <span>{prem}</span>
+                        />
+                        <span className="text-sm">{prem}</span>
                       </div>
                     ))}
                   </div>
@@ -417,42 +561,41 @@ export default function InspectionPlanningModule() {
                     {visitPurposes.map((purpose) => (
                       <div key={purpose} className="flex items-center gap-2">
                         <Checkbox
-                          checked={formData.visitPurpose.includes(purpose)}
+                          checked={formData.visitpurpose.includes(purpose)}
                           onCheckedChange={(checked) =>
                             handleCheckboxChange(
-                              "visitPurpose",
+                              "visitpurpose",
                               purpose,
                               checked as boolean
                             )
                           }
-                        />{" "}
-                        <span>{purpose}</span>
+                        />
+                        <span className="text-sm">{purpose}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* === ASSIGNED EQUIPMENT SECTION WITH ICONS === */}
                 <div>
                   <Label>Assign Equipment</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {equipmentList.map((eq) => (
                       <div
                         key={eq.name}
                         className="flex items-center gap-2 border rounded p-2"
                       >
                         <Checkbox
-                          checked={formData.assignedEquipment.includes(eq.name)}
+                          checked={formData.equipment.includes(eq.name)}
                           onCheckedChange={(checked) =>
                             handleCheckboxChange(
-                              "assignedEquipment",
+                              "equipment",
                               eq.name,
                               checked as boolean
                             )
                           }
                         />
                         <div className="flex items-center gap-1">
-                          {eq.icon} <span>{eq.name}</span>
+                          {eq.icon} <span className="text-sm">{eq.name}</span>
                         </div>
                       </div>
                     ))}
@@ -463,23 +606,42 @@ export default function InspectionPlanningModule() {
                   <Label>Total Target</Label>
                   <Input
                     type="number"
-                    value={formData.totalTarget}
+                    value={formData.totaltarget}
                     onChange={(e) =>
-                      handleInputChange("totalTarget", parseInt(e.target.value))
+                      handleInputChange("totaltarget", e.target.value)
                     }
                   />
                 </div>
 
-                <Button type="submit" className="w-fit" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save Inspection"
+                <div className="flex gap-2">
+                  <Button type="submit" className="w-fit" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        {isEditing ? "Updating..." : "Saving..."}
+                      </>
+                    ) : (
+                      <>
+                        {isEditing ? (
+                          <>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Update Inspection
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Save Inspection
+                          </>
+                        )}
+                      </>
+                    )}
+                  </Button>
+                  {isEditing && (
+                    <Button type="button" variant="outline" onClick={resetForm}>
+                      Cancel
+                    </Button>
                   )}
-                </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -509,31 +671,36 @@ export default function InspectionPlanningModule() {
             <CardContent>
               {/* FILTERS */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                {/* Officer Name */}
                 <div>
-                  <Label>Officer Name</Label>
-                  <Select>
+                  <Label>Status</Label>
+                  <Select
+                    value={filters.status || "all"}
+                    onValueChange={(value) => handleFilterChange("status", value)}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Officer" />
+                      <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      {officers.map((o) => (
-                        <SelectItem key={o.name} value={o.name}>
-                          {o.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="scheduled">Scheduled</SelectItem>
+                      <SelectItem value="in-progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* District */}
                 <div>
                   <Label>District</Label>
-                  <Select>
+                  <Select
+                    value={filters.district || "all"}
+                    onValueChange={(value) => handleFilterChange("district", value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select District" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="all">All Districts</SelectItem>
                       {districts.map((d) => (
                         <SelectItem key={d} value={d}>
                           {d}
@@ -543,14 +710,17 @@ export default function InspectionPlanningModule() {
                   </Select>
                 </div>
 
-                {/* Taluka */}
                 <div>
                   <Label>Taluka</Label>
-                  <Select>
+                  <Select
+                    value={filters.taluka || "all"}
+                    onValueChange={(value) => handleFilterChange("taluka", value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Taluka" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="all">All Talukas</SelectItem>
                       {talukas.map((t) => (
                         <SelectItem key={t} value={t}>
                           {t}
@@ -560,26 +730,17 @@ export default function InspectionPlanningModule() {
                   </Select>
                 </div>
 
-                {/* Visit Date From */}
-                <div>
-                  <Label>Visit Date From</Label>
-                  <Input type="date" />
-                </div>
-
-                {/* Visit Date To */}
-                <div>
-                  <Label>Visit Date To</Label>
-                  <Input type="date" />
-                </div>
-
-                {/* Target Type */}
                 <div>
                   <Label>Target Type</Label>
-                  <Select>
+                  <Select
+                    value={filters.targetType || "all"}
+                    onValueChange={(value) => handleFilterChange("targetType", value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Target Type" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
                       {targetTypes.map((type) => (
                         <SelectItem key={type.value} value={type.value}>
                           {type.label}
@@ -589,20 +750,29 @@ export default function InspectionPlanningModule() {
                   </Select>
                 </div>
 
-                {/* Visit Status */}
                 <div>
-                  <Label>Visit Status</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Completed">Completed</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Missed">Missed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Date From</Label>
+                  <Input 
+                    type="date" 
+                    value={filters.dateFrom || ""}
+                    onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
+                  />
                 </div>
+
+                <div>
+                  <Label>Date To</Label>
+                  <Input 
+                    type="date" 
+                    value={filters.dateTo || ""}
+                    onChange={(e) => handleFilterChange("dateTo", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <Button onClick={loadInspections} disabled={loading}>
+                  Apply Filters
+                </Button>
               </div>
 
               {/* TABLE */}
@@ -612,13 +782,10 @@ export default function InspectionPlanningModule() {
                     <TableHeader>
                       <TableRow className="text-xs">
                         <TableHead className="whitespace-nowrap">
-                          Inspection ID
+                          Inspection Code
                         </TableHead>
                         <TableHead className="whitespace-nowrap">
-                          Officer Code / ID
-                        </TableHead>
-                        <TableHead className="whitespace-nowrap">
-                          Field Officer Name
+                          Officer Name
                         </TableHead>
                         <TableHead className="whitespace-nowrap">
                           Visit Date & Time
@@ -630,72 +797,105 @@ export default function InspectionPlanningModule() {
                           Taluka
                         </TableHead>
                         <TableHead className="whitespace-nowrap">
-                          Area / Village
+                          Location
                         </TableHead>
                         <TableHead className="whitespace-nowrap">
-                          Target Premises Type
+                          Target Type
                         </TableHead>
                         <TableHead className="whitespace-nowrap">
                           Visit Purpose
                         </TableHead>
                         <TableHead className="whitespace-nowrap">
-                          Assigned Equipment
+                          Equipment
                         </TableHead>
                         <TableHead className="whitespace-nowrap">
                           Total Target
                         </TableHead>
                         <TableHead className="whitespace-nowrap">
-                          Target Achieved
+                          Status
                         </TableHead>
                         <TableHead className="whitespace-nowrap">
-                          Status
+                          Actions
                         </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {inspections.map((i) => (
-                        <TableRow key={i.id} className="text-xs">
-                          <TableCell className="whitespace-nowrap">
-                            {i.id}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {i.officerCode}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {i.officerName}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {i.visitDateTime}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {i.district}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {i.taluka}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {i.area}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {i.targetType}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {i.visitPurpose.join(", ")}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {i.assignedEquipment.join(", ")}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {i.totalTarget}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {i.targetAchieved}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {i.status}
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={12} className="text-center py-8">
+                            Loading inspections...
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ) : inspections.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={12} className="text-center py-8">
+                            No inspections found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        inspections.map((inspection) => (
+                          <TableRow key={inspection.id} className="text-xs">
+                            <TableCell className="whitespace-nowrap font-mono">
+                              {inspection.inspectioncode || "N/A"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {inspection.user?.name || "Unknown"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {inspection.datetime ? formatDateTime(inspection.datetime) : "N/A"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {inspection.district || "N/A"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {inspection.taluka || "N/A"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {inspection.location || "N/A"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {inspection.targetType || "N/A"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {Array.isArray(inspection.visitpurpose) ? inspection.visitpurpose.join(", ") : "N/A"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {Array.isArray(inspection.equipment) ? inspection.equipment.join(", ") : "N/A"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {inspection.totaltarget || "0"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                inspection.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                inspection.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                                inspection.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {inspection.status || "unknown"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEdit(inspection)}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDelete(inspection.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </div>

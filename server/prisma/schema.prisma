@@ -298,7 +298,7 @@ model FIRCase {
 model File {
   id           String   @id @default(cuid())
   filename     String
-  originalName String
+  originalName String 
   mimetype     String
   size         Int
   path         String
