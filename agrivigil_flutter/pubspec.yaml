@@ -1,0 +1,83 @@
+name: agrivigil_flutter
+description: Agricultural Inspection and Monitoring System
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # UI & Design
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.1.0
+  flutter_svg: ^2.0.9
+  
+  # State Management
+  provider: ^6.1.1
+  
+  # Supabase
+  supabase_flutter: ^2.3.4
+  
+  # Storage & Permissions
+  image_picker: ^1.0.7
+  file_picker: ^8.1.4
+  permission_handler: ^11.3.0
+  path_provider: ^2.1.2
+  
+  # Utils
+  intl: ^0.20.2
+  uuid: ^4.3.3
+  crypto: ^3.0.3
+  
+  # Forms & Validation
+  flutter_form_builder: ^10.1.0
+  form_builder_validators: ^11.0.0
+  
+  # Charts & Data Visualization
+  fl_chart: ^0.66.2
+  
+  # PDF Generation
+  pdf: ^3.10.8
+  printing: ^5.12.0
+  
+  # Location
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
+  
+  # Camera & QR
+  camera: ^0.10.5+9
+  mobile_scanner: ^5.2.3
+  
+  # Connectivity
+  connectivity_plus: ^5.0.2
+  
+  # Local Storage
+  shared_preferences: ^2.2.2
+  
+  # Date/Time Pickers
+  syncfusion_flutter_datepicker: ^28.1.38
+  
+  # Loading & Animations
+  flutter_spinkit: ^5.2.0
+  lottie: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
+  
+  # Fonts are handled by google_fonts package
+  # No need to include font files manually
