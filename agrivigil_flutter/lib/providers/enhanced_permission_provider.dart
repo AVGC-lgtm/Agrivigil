@@ -6,7 +6,7 @@ import 'auth_provider.dart';
 
 class EnhancedPermissionProvider extends ChangeNotifier {
   final _supabase = Supabase.instance.client;
-  
+
   AuthProvider? _authProvider;
   RoleDefinition? _userRole;
   Map<String, List<String>> _modulePermissions = {};
@@ -36,18 +36,15 @@ class EnhancedPermissionProvider extends ChangeNotifier {
       notifyListeners();
 
       final user = _authProvider!.user!;
-      
+
       // Load user role details
-      final roleResponse = await _supabase
-          .from('roles')
-          .select()
-          .eq('id', user.roleId)
-          .single();
+      final roleResponse =
+          await _supabase.from('roles').select().eq('id', user.roleId).single();
 
       // Map to role definition
       final roleName = roleResponse['name'] as String;
       _userRole = _getRoleDefinitionByName(roleName);
-      
+
       if (_userRole == null) {
         throw Exception('Unknown role: $roleName');
       }
@@ -58,13 +55,14 @@ class EnhancedPermissionProvider extends ChangeNotifier {
         'userRole': _userRole!.id,
         'userDepartment': _userRole!.department,
         'userLevel': _userRole!.level,
-        'userDistrict': user.officerCode?.substring(0, 3), // Extract district from officer code
-        'userState': user.officerCode?.substring(3, 5), // Extract state from officer code
+        'userDistrict': user.officerCode
+            ?.substring(0, 3), // Extract district from officer code
+        'userState': user.officerCode
+            ?.substring(3, 5), // Extract state from officer code
       };
 
       // Load module permissions based on role
       _loadModulePermissions();
-      
     } catch (e) {
       _error = 'Failed to load enhanced permissions: ${e.toString()}';
       print(_error);
@@ -76,16 +74,16 @@ class EnhancedPermissionProvider extends ChangeNotifier {
 
   void _loadModulePermissions() {
     _modulePermissions = {};
-    
+
     RBACConfig.modulePermissions.forEach((module, permissions) {
       final allowedPermissions = <String>[];
-      
+
       for (final permission in permissions) {
         if (_canAccessPermission(permission)) {
           allowedPermissions.add(permission.id);
         }
       }
-      
+
       if (allowedPermissions.isNotEmpty) {
         _modulePermissions[module] = allowedPermissions;
       }
@@ -96,18 +94,18 @@ class EnhancedPermissionProvider extends ChangeNotifier {
     if (_authProvider?.isSuperUser ?? false) {
       return true;
     }
-    
+
     if (_userRole == null) return false;
-    
+
     // Check if user's department is allowed
     if (permission.allowedDepartments.contains('ALL')) {
       return true;
     }
-    
+
     if (permission.allowedDepartments.contains(_userRole!.department)) {
       return true;
     }
-    
+
     // Check specific role permissions
     return permission.allowedDepartments.contains(_userRole!.id);
   }
@@ -117,7 +115,7 @@ class EnhancedPermissionProvider extends ChangeNotifier {
     if (_authProvider?.isSuperUser ?? false) {
       return true;
     }
-    
+
     final modulePerms = _modulePermissions[module];
     return modulePerms?.contains(permissionId) ?? false;
   }
@@ -127,7 +125,7 @@ class EnhancedPermissionProvider extends ChangeNotifier {
     if (_authProvider?.isSuperUser ?? false) {
       return true;
     }
-    
+
     return _modulePermissions.containsKey(module);
   }
 
@@ -139,7 +137,7 @@ class EnhancedPermissionProvider extends ChangeNotifier {
     if (_authProvider?.isSuperUser ?? false) {
       return true;
     }
-    
+
     return ABACAttributes.canPerformAction(
       userId: _userContext['userId'],
       action: action,
@@ -153,13 +151,13 @@ class EnhancedPermissionProvider extends ChangeNotifier {
     if (_authProvider?.isSuperUser ?? false) {
       return true;
     }
-    
+
     final hierarchy = RBACConfig.approvalHierarchy[processType];
     if (hierarchy == null) return false;
-    
+
     final userRoleIndex = hierarchy.indexOf(_userRole!.id);
     if (userRoleIndex == -1) return false;
-    
+
     // Can approve if user is at higher level than current status
     // Implementation depends on your workflow
     return true;
@@ -175,7 +173,7 @@ class EnhancedPermissionProvider extends ChangeNotifier {
         nationalLevel: true,
       );
     }
-    
+
     return RBACConfig.dataAccessRules[_userRole?.id];
   }
 
@@ -188,40 +186,40 @@ class EnhancedPermissionProvider extends ChangeNotifier {
     if (_authProvider?.isSuperUser ?? false) {
       return true;
     }
-    
+
     final transitions = WorkflowConfig.workflows[workflow];
     if (transitions == null) return false;
-    
+
     final transition = transitions.firstWhere(
       (t) => t.from == fromStatus && t.to == toStatus,
       orElse: () => WorkflowTransition(
-        from: '', 
-        to: '', 
-        requiredRole: '', 
+        from: '',
+        to: '',
+        requiredRole: '',
         action: '',
       ),
     );
-    
+
     return transition.requiredRole == _userRole?.id;
   }
 
   // Get user's subordinates (for hierarchical data access)
   Future<List<String>> getSubordinateUserIds() async {
     if (_userRole == null) return [];
-    
+
     try {
       // Get roles with lower level than current user
       final subordinateRoles = RBACConfig.roles.values
           .where((role) => role.level < _userRole!.level)
           .map((role) => role.id)
           .toList();
-      
+
       // Get users with those roles
       final response = await _supabase
           .from('users')
           .select('id')
-          .inFilter('roleId', subordinateRoles);
-      
+          .inFilter('role_id', subordinateRoles);
+
       return (response as List).map((user) => user['id'] as String).toList();
     } catch (e) {
       print('Error getting subordinates: $e');
@@ -242,7 +240,7 @@ class EnhancedPermissionProvider extends ChangeNotifier {
       'District Agricultural Officer': RBACConfig.roles['DAO'],
       'Legal Officer': RBACConfig.roles['LEGAL_OFFICER'],
     };
-    
+
     return roleMap[name];
   }
 
@@ -256,40 +254,41 @@ class EnhancedPermissionProvider extends ChangeNotifier {
   // Activity-based permission check
   bool canPerformActivity(String activity) {
     final activityPermissionMap = {
-      'create_inspection': hasPermission('inspection_planning', 'create_inspection'),
+      'create_inspection':
+          hasPermission('inspection_planning', 'create_inspection'),
       'approve_sample': hasPermission('lab_interface', 'approve_test_results'),
       'generate_report': hasPermission('qc_module', 'export_reports'),
       'manage_compliance': hasPermission('qc_module', 'manage_compliance'),
       'perform_abc_analysis': hasPermission('qc_module', 'abc_analysis'),
     };
-    
+
     return activityPermissionMap[activity] ?? false;
   }
 
   // Get available actions for a resource
   List<String> getAvailableActions(Map<String, dynamic> resource) {
     final actions = <String>[];
-    
+
     if (canPerformAction(action: 'view', resource: resource)) {
       actions.add('view');
     }
-    
+
     if (canPerformAction(action: 'edit', resource: resource)) {
       actions.add('edit');
     }
-    
+
     if (canPerformAction(action: 'delete', resource: resource)) {
       actions.add('delete');
     }
-    
+
     if (canPerformAction(action: 'approve', resource: resource)) {
       actions.add('approve');
     }
-    
+
     if (canPerformAction(action: 'reject', resource: resource)) {
       actions.add('reject');
     }
-    
+
     return actions;
   }
 

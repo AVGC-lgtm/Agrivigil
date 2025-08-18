@@ -7,7 +7,7 @@ import 'auth_provider.dart';
 
 class PermissionProvider extends ChangeNotifier {
   final _supabase = Supabase.instance.client;
-  
+
   AuthProvider? _authProvider;
   Map<String, String> _permissions = {};
   bool _isLoading = false;
@@ -50,11 +50,11 @@ class PermissionProvider extends ChangeNotifier {
       final response = await _supabase
           .from('role_permissions')
           .select()
-          .eq('roleId', roleId);
+          .eq('role_id', roleId);
 
       if (response != null && response.isNotEmpty) {
         _permissions = {};
-        
+
         // Initialize all permissions as None
         for (final menu in MenuDefinitions.allMenus) {
           _permissions[menu.id] = AppConstants.permissionNone;
@@ -64,7 +64,7 @@ class PermissionProvider extends ChangeNotifier {
         for (final perm in response) {
           final menuIds = List<String>.from(perm['menuId'] ?? []);
           final authTypes = List<String>.from(perm['authType'] ?? []);
-          
+
           for (int i = 0; i < menuIds.length && i < authTypes.length; i++) {
             _permissions[menuIds[i]] = authTypes[i];
           }
@@ -79,7 +79,8 @@ class PermissionProvider extends ChangeNotifier {
     }
   }
 
-  bool hasPermission(String menuId, {String requiredLevel = AppConstants.permissionRead}) {
+  bool hasPermission(String menuId,
+      {String requiredLevel = AppConstants.permissionRead}) {
     if (_authProvider?.isSuperUser ?? false) {
       return true;
     }
@@ -93,8 +94,8 @@ class PermissionProvider extends ChangeNotifier {
       return permission == AppConstants.permissionFull;
     }
 
-    return permission == AppConstants.permissionFull || 
-           permission == AppConstants.permissionRead;
+    return permission == AppConstants.permissionFull ||
+        permission == AppConstants.permissionRead;
   }
 
   bool canAccess(String menuId) {

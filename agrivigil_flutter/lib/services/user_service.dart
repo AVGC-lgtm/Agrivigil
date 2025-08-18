@@ -47,8 +47,8 @@ class UserService {
             'email': email,
             'name': name,
             'password': password, // In production, hash the password
-            'roleId': roleId,
-            'officerCode': officerCode,
+            'role_id': roleId,
+            'officer_code': officerCode,
           })
           .select('*, role:roles(*)')
           .single();
@@ -68,8 +68,8 @@ class UserService {
     try {
       final updates = <String, dynamic>{};
       if (name != null) updates['name'] = name;
-      if (roleId != null) updates['roleId'] = roleId;
-      if (officerCode != null) updates['officerCode'] = officerCode;
+      if (roleId != null) updates['role_id'] = roleId;
+      if (officerCode != null) updates['officer_code'] = officerCode;
 
       final response = await _supabase
           .from('users')

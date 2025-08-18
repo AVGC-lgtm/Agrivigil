@@ -261,15 +261,41 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> logout() async {
     try {
+      _isLoading = true;
+      notifyListeners();
+      
+      // Add a small delay for better UX
+      await Future.delayed(const Duration(milliseconds: 500));
+      
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
+
+      // Create audit log for logout
+      if (_user != null) {
+        try {
+          await _supabase.from('audit_logs').insert({
+            'user_id': _user!.id,
+            'action': 'USER_LOGOUT',
+            'module': 'AUTH',
+            'details': {
+              'email': _user!.email,
+              'role': _user!.role?.name,
+              'timestamp': DateTime.now().toIso8601String(),
+            },
+          });
+        } catch (e) {
+          print('Failed to create logout audit log: $e');
+        }
+      }
 
       _user = null;
       _isSuperUser = false;
       _error = null;
+      _isLoading = false;
       notifyListeners();
     } catch (e) {
       _error = 'Logout failed: ${e.toString()}';
+      _isLoading = false;
       notifyListeners();
     }
   }
