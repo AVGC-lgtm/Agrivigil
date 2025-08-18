@@ -1,3 +1,5 @@
+import '../utils/json_helpers.dart';
+
 class SeizureModel {
   final String id;
   final String seizurecode;
@@ -164,7 +166,7 @@ class LabSampleModel {
       receivedAt: json['received_at'] != null
           ? DateTime.parse(json['received_at'])
           : null,
-      underTesting: json['under_testing'],
+      underTesting: parseBool(json['under_testing']),
       resultStatus: json['result_status'],
       reportSentAt: json['report_sent_at'] != null
           ? DateTime.parse(json['report_sent_at'])

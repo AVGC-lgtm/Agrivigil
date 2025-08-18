@@ -1,3 +1,5 @@
+import '../utils/json_helpers.dart';
+
 class RoleModel {
   final String id;
   final String name;
@@ -28,14 +30,10 @@ class RoleModel {
       code: json['code'] ?? '',
       description: json['description'],
       dashboardRoute: json['dashboard_route'] ?? '',
-      priority: json['priority'] ?? 0,
-      isActive: json['is_active'] ?? true,
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
-          : null,
-      updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at']) 
-          : null,
+      priority: parseInt(json['priority'], defaultValue: 0),
+      isActive: parseBoolWithDefault(json['is_active'], true),
+      createdAt: parseDateTime(json['created_at']),
+      updatedAt: parseDateTime(json['updated_at']),
     );
   }
 

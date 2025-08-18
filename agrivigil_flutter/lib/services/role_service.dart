@@ -21,18 +21,27 @@ class RoleService {
     }
   }
 
-  // Fetch specific roles for registration (excluding Super Admin)
+  // Fetch specific roles for registration (only the 4 main dashboard roles)
   Future<List<RoleModel>> getRegistrationRoles() async {
     try {
       final response = await _supabase
           .from('roles')
           .select()
-          .neq('name', 'Super Admin')
           .order('name', ascending: true);
 
-      return (response as List)
+      // Filter to only include the 4 essential roles
+      final allRoles = (response as List)
           .map((json) => RoleModel.fromJson(json))
           .toList();
+      
+      final essentialRoleNames = [
+        'Field Officer',
+        'Lab Analyst', 
+        'QC Inspector',
+        'District Agriculture Officer'
+      ];
+      
+      return allRoles.where((role) => essentialRoleNames.contains(role.name)).toList();
     } catch (e) {
       print('Error fetching registration roles: $e');
       return [];
@@ -84,21 +93,13 @@ class RoleService {
     }
   }
 
-  // Initialize default roles
+  // Initialize only the 4 essential roles for dashboards
   Future<void> initializeDefaultRoles() async {
     final defaultRoles = [
       {'name': 'Field Officer', 'description': 'Field inspection and execution officer'},
+      {'name': 'Lab Analyst', 'description': 'Laboratory analysis and testing'},
+      {'name': 'QC Inspector', 'description': 'Quality Control inspection'},
       {'name': 'District Agriculture Officer', 'description': 'District level agriculture officer'},
-      {'name': 'Legal Officer', 'description': 'Legal and compliance officer'},
-      {'name': 'Lab Coordinator', 'description': 'Laboratory coordination and management'},
-      {'name': 'HQ Monitoring', 'description': 'Headquarters monitoring team'},
-      {'name': 'District Admin', 'description': 'District administration'},
-      {'name': 'QC Inspector', 'description': 'Quality Control inspector'},
-      {'name': 'Lab Analyst', 'description': 'Laboratory analyst'},
-      {'name': 'QC Manager', 'description': 'Quality Control manager'},
-      {'name': 'QC Supervisor', 'description': 'Quality Control supervisor'},
-      {'name': 'QC Department Head', 'description': 'Head of Quality Control department'},
-      {'name': 'Super Admin', 'description': 'System administrator with full access'},
     ];
 
     for (final role in defaultRoles) {

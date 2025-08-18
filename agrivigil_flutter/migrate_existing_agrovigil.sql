@@ -164,16 +164,12 @@ BEGIN
     END IF;
 END $$;
 
--- Step 6: Insert any missing roles that are needed for registration
+-- Step 6: Insert only the 4 essential roles needed for registration and dashboards
 INSERT INTO roles (name, code, description, dashboard_route, priority) VALUES
     ('Field Officer', 'FO', 'Field inspection and execution officer', '/field-officer-dashboard', 1),
     ('Lab Analyst', 'LA', 'Laboratory analysis and testing', '/lab-analyst-dashboard', 2),
     ('QC Inspector', 'QC', 'Quality Control inspection', '/qc-inspector-dashboard', 3),
-    ('District Agriculture Officer', 'DAO', 'District level agriculture officer', '/dao-dashboard', 4),
-    ('Legal Officer', 'LO', 'Legal and compliance officer', '/legal-officer-dashboard', 5),
-    ('Lab Coordinator', 'LC', 'Laboratory coordination and management', '/lab-coordinator-dashboard', 6),
-    ('HQ Monitoring', 'HQ', 'Headquarters monitoring team', '/hq-monitoring-dashboard', 7),
-    ('District Admin', 'DA', 'District administration', '/district-admin-dashboard', 8)
+    ('District Agriculture Officer', 'DAO', 'District level agriculture officer', '/dao-dashboard', 4)
 ON CONFLICT (name) DO UPDATE SET 
     code = EXCLUDED.code,
     description = EXCLUDED.description,

@@ -65,6 +65,18 @@ dependencies:
   # Loading & Animations
   flutter_spinkit: ^5.2.0
   lottie: ^3.0.0
+  
+  # Local Notifications (without Firebase)
+  flutter_local_notifications: ^17.2.3
+  
+  # Advanced Local Storage
+  hive_flutter: ^1.1.0
+  
+  # Excel Export
+  excel: ^4.0.6
+  
+  # Sharing
+  share_plus: ^10.1.2
 
 dev_dependencies:
   flutter_test:

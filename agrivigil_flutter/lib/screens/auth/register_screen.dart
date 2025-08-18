@@ -184,6 +184,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 16),
                   
+                  // Role selection with description
+                  Text(
+                    'Select your role to access the appropriate dashboard:',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  
                   DropdownButtonFormField<String>(
                     value: _selectedRoleId,
                     decoration: const InputDecoration(

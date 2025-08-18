@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 import '../screens/splash_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
+import '../screens/auth/forgot_password_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 // Role-based Dashboards
 import '../screens/dashboards/field_officer_dashboard.dart';
 import '../screens/dashboards/lab_analyst_dashboard.dart';
 import '../screens/dashboards/qc_inspector_dashboard.dart';
 import '../screens/dashboards/dao_dashboard.dart';
+import '../screens/dashboards/legal_officer_dashboard.dart';
+import '../screens/dashboards/lab_coordinator_dashboard.dart';
+import '../screens/dashboards/hq_monitoring_dashboard.dart';
+import '../screens/dashboards/district_admin_dashboard.dart';
+import '../screens/dashboards/admin_dashboard.dart';
 // Field Execution
 import '../screens/modules/field_execution/field_execution_list.dart';
 import '../screens/modules/field_execution/field_execution_form.dart';
@@ -47,6 +53,7 @@ class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
   static const String dashboard = '/dashboard';
   
   // Role-based Dashboard Routes
@@ -107,6 +114,7 @@ class AppRoutes {
       splash: (context) => const SplashScreen(),
       login: (context) => const LoginScreen(),
       register: (context) => const RegisterScreen(),
+      forgotPassword: (context) => const ForgotPasswordScreen(),
       dashboard: (context) => const DashboardScreen(),
       
       // Role-based Dashboards
@@ -114,11 +122,11 @@ class AppRoutes {
       labAnalystDashboard: (context) => const LabAnalystDashboard(),
       qcInspectorDashboard: (context) => const QcInspectorDashboard(),
       daoDashboard: (context) => const DaoDashboard(),
-      legalOfficerDashboard: (context) => const DashboardScreen(), // Placeholder
-      labCoordinatorDashboard: (context) => const DashboardScreen(), // Placeholder
-      hqMonitoringDashboard: (context) => const DashboardScreen(), // Placeholder
-      districtAdminDashboard: (context) => const DashboardScreen(), // Placeholder
-      adminDashboard: (context) => const DashboardScreen(), // Placeholder
+      legalOfficerDashboard: (context) => const LegalOfficerDashboard(),
+      labCoordinatorDashboard: (context) => const LabCoordinatorDashboard(),
+      hqMonitoringDashboard: (context) => const HQMonitoringDashboard(),
+      districtAdminDashboard: (context) => const DistrictAdminDashboard(),
+      adminDashboard: (context) => const AdminDashboard(),
       
       // Field Execution
       fieldExecutionList: (context) => const FieldExecutionListScreen(),

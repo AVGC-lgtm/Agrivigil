@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS users (
     officer_code VARCHAR(50) UNIQUE NOT NULL,
     role_id UUID REFERENCES roles(id) ON DELETE RESTRICT,
     district VARCHAR(100) NOT NULL,
+    state VARCHAR(100) DEFAULT 'Maharashtra', -- Added state column
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
     metadata JSONB DEFAULT '{}', -- For additional flexible data
     last_login TIMESTAMPTZ,
@@ -79,7 +80,8 @@ CREATE TRIGGER update_roles_updated_at BEFORE UPDATE ON roles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Create view for user details with role
-CREATE OR REPLACE VIEW user_details AS
+DROP VIEW IF EXISTS user_details CASCADE;
+CREATE VIEW user_details AS
 SELECT 
     u.id,
     u.email,
@@ -87,6 +89,7 @@ SELECT
     u.phone,
     u.officer_code,
     u.district,
+    u.state,
     u.status,
     u.last_login,
     u.created_at,

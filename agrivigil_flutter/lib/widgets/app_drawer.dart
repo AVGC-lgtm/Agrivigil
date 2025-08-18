@@ -219,8 +219,14 @@ class AppDrawer extends StatelessWidget {
                       ),
                     );
 
-                    if (confirmed == true) {
+                    if (confirmed == true && context.mounted) {
                       await authProvider.logout();
+                      // Navigate to login screen after logout
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/login',
+                        (route) => false,
+                      );
                     }
                   },
                 ),
