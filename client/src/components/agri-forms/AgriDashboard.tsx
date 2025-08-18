@@ -132,8 +132,8 @@ const AgriDashboard = () => {
               <ResponsiveContainer width="100%" height="100%" >
                 <BarChart data={submissionStatsData} margin={{ top: 5, right: 10, left: -25, bottom: 5 }}> {/* Adjusted margins */}
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} angle={-25} textAnchor="end" height={60} interval={0} fontSize={9} smFontSize={10} /> {/* Responsive font size */}
-                  <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={10} smFontSize={12}/>
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} angle={-25} textAnchor="end" height={60} interval={0} fontSize={9} />
+                  <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={10} />
                   <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
                   <ChartLegend content={<ChartLegendContent />} />
                   <Bar dataKey="submitted" fill="var(--color-submitted)" radius={4} />

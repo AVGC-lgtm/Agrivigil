@@ -49,8 +49,8 @@ const AgriReports = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlySubmissionsData} margin={{ top: 5, right: 10, left: -25, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} fontSize={10} smFontSize={12}/>
-                  <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={10} smFontSize={12}/>
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} fontSize={10} />
+                  <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={10} />
                   <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
                   <Bar dataKey="submissions" fill="var(--color-submissions)" radius={4} />
                   <ChartLegend content={<ChartLegendContent />} />
@@ -70,7 +70,7 @@ const AgriReports = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <ChartTooltip content={<ChartTooltipContent nameKey="name" indicator="dot" />} />
-                  <Pie data={approvalStatsData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} smOuterRadius={100} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} className="text-[10px] sm:text-xs">
+                  <Pie data={approvalStatsData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} className="text-[10px] sm:text-xs">
                     {approvalStatsData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}

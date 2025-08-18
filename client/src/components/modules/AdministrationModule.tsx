@@ -216,7 +216,7 @@ export default function AdministrationModule() {
             // Map existing permissions to form
             const loadedPermissions: Record<string, string> = { ...initialPermissions };
             
-            rolePermission.menuId.forEach((menuId, index) => {
+            rolePermission.menuId.forEach((menuId: string, index: number) => {
               const authType = rolePermission.authType[index];
               if (menuId && authType) {
                 loadedPermissions[menuId] = authType;

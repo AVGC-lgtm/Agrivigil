@@ -4,7 +4,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, Edit3, MapPin } from 'lucide-react'; // Added icons
 import { useRouter } from 'next/navigation'; // For client-side navigation
-import { useAppContext } from '@/context/AppContext'; // To trigger navigation in main app
+
 
 interface AgriSubmissionRowProps {
   id: string;
@@ -16,7 +16,6 @@ interface AgriSubmissionRowProps {
 
 const AgriSubmissionRow: React.FC<AgriSubmissionRowProps> = ({ id, type, date, status, formTypeKey }) => {
   const router = useRouter(); // Next.js App Router's useRouter
-  const { setActiveTab } = useAppContext(); // Assuming AppContext is available if needed for main nav
 
   const statusColors = {
     'Pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300 border border-yellow-300 dark:border-yellow-700',
@@ -47,7 +46,7 @@ const AgriSubmissionRow: React.FC<AgriSubmissionRowProps> = ({ id, type, date, s
     // This is a simplified navigation, ideally AgriSubmissions would have a prop to call navigateTo of AgriFormsModule
     
     // To ensure we are on the right main tab first (if not already)
-    // setActiveTab('agri-forms-module'); // This might cause immediate re-render before router.push
+    // Note: Main tab navigation would be handled by the parent component
     
     // Then navigate with query parameters for the AgriFormsModule to pick up
     // The actual page path would be determined by where AgriFormsModule is rendered.
