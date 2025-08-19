@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Select,
   SelectContent,
@@ -30,6 +31,7 @@ import {
 
 
 export default function DashboardModule() {
+  const router = useRouter();
   const [districts, setDistricts] = useState<District[]>([]);
   const [talukas, setTalukas] = useState<Taluka[]>([]);
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
@@ -984,6 +986,29 @@ export default function DashboardModule() {
     }
   };
 
+  // Function to handle card clicks and redirect to appropriate pages
+  const handleCardClick = (cardType: string) => {
+    switch (cardType) {
+      case 'inspections':
+        router.push('/dashboard?tab=inspection-planning');
+        break;
+      case 'counterfeit':
+        router.push('/dashboard?tab=field-execution');
+        break;
+      case 'ban-chemical':
+        router.push('/dashboard?tab=seizure-logging');
+        break;
+      case 'lab-samples':
+        router.push('/dashboard?tab=lab-interface');
+        break;
+      case 'legal-cases':
+        router.push('/dashboard?tab=legal-module');
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -1111,7 +1136,10 @@ export default function DashboardModule() {
           </div>
         )}
         {/* Inspections Done Card */}
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+        <div 
+          className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-105"
+          onClick={() => handleCardClick('inspections')}
+        >
           <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">
             No. of Inspections done in state
           </h3>
@@ -1129,7 +1157,10 @@ export default function DashboardModule() {
           </div>
         </div>
         {/* Counterfeit Samples Card */}
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+        <div 
+          className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-105"
+          onClick={() => handleCardClick('counterfeit')}
+        >
           <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">
             No. of counterfeit samples collected
           </h3>
@@ -1142,7 +1173,10 @@ export default function DashboardModule() {
         </div>
 
         {/* Ban Chemical Samples Card */}
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+        <div 
+          className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-105"
+          onClick={() => handleCardClick('ban-chemical')}
+        >
           <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">
             No. of ban chemical samples collected
           </h3>
@@ -1155,7 +1189,10 @@ export default function DashboardModule() {
         </div>
 
         {/* Lab Samples Card */}
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+        <div 
+          className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-105"
+          onClick={() => handleCardClick('lab-samples')}
+        >
           <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">
             No. of samples sent to laboratory
           </h3>
@@ -1179,7 +1216,10 @@ export default function DashboardModule() {
         </div>
         
         {/* Legal Cases Card */}
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+        <div 
+          className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-105"
+          onClick={() => handleCardClick('legal-cases')}
+        >
           <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">
             No. of Legal cases Registered
           </h3>
