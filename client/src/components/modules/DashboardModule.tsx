@@ -1271,21 +1271,7 @@ export default function DashboardModule() {
                    <option value="area">Area Chart</option>
                  </select>
                </div>
-               <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
-                 <span className="text-sm font-medium text-gray-500">Categories:</span>
-                 <select 
-                   value={selectedCategory} 
-                   onChange={(e) => setSelectedCategory(e.target.value)}
-                   className="ml-2 text-sm font-medium bg-transparent border-none outline-none cursor-pointer"
-                 >
-                   <option value="all">All Categories</option>
-                   <option value="inspections_done">No. of Inspections done in state</option>
-                   <option value="counterfeit_samples">No. of counterfeit samples collected</option>
-                   <option value="ban_chemical_samples">No. of ban chemical samples collected</option>
-                   <option value="laboratory_samples">No. of samples sent to laboratory</option>
-                   <option value="legal_cases">No. of Legal cases Registered</option>
-                 </select>
-               </div>
+
                <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
                  <span className="text-sm font-medium text-gray-500">Showing:</span>
                  <span className="ml-2 text-lg font-bold text-blue-600">

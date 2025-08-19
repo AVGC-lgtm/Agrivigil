@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { APP_NAME, COMPANY_INFO, SUPER_USER } from '@/lib/constants'
-import { Crown, Shield, Building2, Leaf, Users, Phone, Mail, MapPin } from 'lucide-react'
+import { Crown, Shield, Building2, Leaf, Users, Phone, Mail, MapPin, Loader2 } from 'lucide-react'
 import api from '@/lib/api'
 
 export default function SignIn() {
@@ -76,6 +76,28 @@ export default function SignIn() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50">
+      {/* Full Screen Loader Overlay */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center space-y-4">
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center">
+                <Shield className="h-8 w-8 text-white" />
+              </div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-green-500 border-r-blue-600 animate-spin"></div>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900">Authenticating...</h3>
+              <p className="text-sm text-gray-600">Please wait while we verify your credentials</p>
+            </div>
+            <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Redirecting to dashboard</span>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-green-200/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -172,18 +194,25 @@ export default function SignIn() {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className={`w-full h-12 text-base font-semibold transition-all duration-200 ${
-                    showSuperUser 
-                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 shadow-lg hover:shadow-xl' 
-                      : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 shadow-lg hover:shadow-xl'
-                  }`} 
-                  disabled={loading}
-                >
-                  {showSuperUser && <Crown className="h-5 w-5 mr-2" />}
-                  {loading ? 'Signing in...' : showSuperUser ? 'Super User Login' : 'Sign In'}
-                </Button>
+                                 <Button 
+                   type="submit" 
+                   className={`w-full h-12 text-base font-semibold transition-all duration-200 ${
+                     showSuperUser 
+                       ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 shadow-lg hover:shadow-xl' 
+                       : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 shadow-lg hover:shadow-xl'
+                   }`} 
+                   disabled={loading}
+                 >
+                   {showSuperUser && <Crown className="h-5 w-5 mr-2" />}
+                   {loading ? (
+                     <div className="flex items-center space-x-2">
+                       <Loader2 className="h-5 w-5 animate-spin" />
+                       <span>Signing in...</span>
+                     </div>
+                   ) : (
+                     showSuperUser ? 'Super User Login' : 'Sign In'
+                   )}
+                 </Button>
               </form>
 
               {/* Toggle Button */}
@@ -260,7 +289,7 @@ export default function SignIn() {
               <div className="flex items-center space-x-6 text-sm text-gray-600">
                 <span>Version 2.0.1</span>
                 <span>•</span>
-                <span>Last updated: {new Date().toLocaleDateString()}</span>
+                <span>Last updated: August 2025</span>
               </div>
             </div>
           </div>

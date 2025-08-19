@@ -79,7 +79,7 @@ async function getDashboardReport(
     inspectionsByStatus,
     seizuresByStatus,
     labSamplesByStatus,
-    firCasesByStatus,
+    firCasesByViolationType,
     recentActivity,
     topOfficers,
     topDistricts
@@ -148,9 +148,10 @@ async function getDashboardReport(
       }
     }),
 
+    // FIRCase doesn't have a status field, so we'll count by violation_type instead
     prisma.fIRCase.groupBy({
-      by: ['status'],
-      _count: { status: true },
+      by: ['violation_type'],
+      _count: { violation_type: true },
       where: { 
         ...dateFilter, 
         ...userFilter,
@@ -223,7 +224,7 @@ async function getDashboardReport(
       inspections: inspectionsByStatus,
       seizures: seizuresByStatus,
       labSamples: labSamplesByStatus,
-      firCases: firCasesByStatus
+      firCases: firCasesByViolationType
     },
     recentActivity,
     topOfficers: topOfficersWithDetails,
@@ -353,7 +354,7 @@ async function getSeizuresReport(
         firCases: {
           select: {
             id: true,
-            status: true
+            fircode: true
           }
         }
       },
@@ -422,7 +423,7 @@ async function getLabSamplesReport(
   const userFilter = getUserFilter(officer);
   const keywordFilter = getKeywordFilter(keyword);
 
-  const [labSamples, statusBreakdown, labDestinationBreakdown, resultBreakdown] = await Promise.all([
+  const [labSamples, statusBreakdown, departmentBreakdown, resultBreakdown] = await Promise.all([
     prisma.labSample.findMany({
       where: { 
         ...dateFilter, 
@@ -445,7 +446,7 @@ async function getLabSamplesReport(
         firCases: {
           select: {
             id: true,
-            status: true
+            fircode: true
           }
         }
       },
@@ -463,23 +464,23 @@ async function getLabSamplesReport(
     }),
 
     prisma.labSample.groupBy({
-      by: ['labDestination'],
-      _count: { labDestination: true },
+      by: ['department'],
+      _count: { department: true },
       where: { 
         ...dateFilter, 
         ...userFilter,
         ...keywordFilter?.labSamples 
       },
-      orderBy: { _count: { labDestination: 'desc' } }
+      orderBy: { _count: { department: 'desc' } }
     }),
 
     prisma.labSample.groupBy({
-      by: ['labResult'],
-      _count: { labResult: true },
+      by: ['result_status'],
+      _count: { result_status: true },
       where: {
         ...dateFilter,
         ...userFilter,
-        labResult: { not: null }
+        result_status: { not: null }
       }
     })
   ]);
@@ -499,7 +500,7 @@ async function getLabSamplesReport(
   return {
     labSamples,
     statusBreakdown,
-    labDestinationBreakdown,
+    departmentBreakdown,
     resultBreakdown,
     analytics: {
       avgCompletionTimeHours: Math.round(avgCompletionTime),
@@ -547,7 +548,7 @@ async function getFIRCasesReport(
         labSample: {
           select: {
             id: true,
-            sampleType: true,
+            sample_desc: true,
             status: true
           }
         }
@@ -555,9 +556,10 @@ async function getFIRCasesReport(
       orderBy: { createdAt: 'desc' }
     }),
 
+    // FIRCase doesn't have a status field, so we'll count by violation_type instead
     prisma.fIRCase.groupBy({
-      by: ['status'],
-      _count: { status: true },
+      by: ['violation_type'],
+      _count: { violation_type: true },
       where: { 
         ...dateFilter, 
         ...userFilter,
@@ -567,15 +569,15 @@ async function getFIRCasesReport(
     }),
 
     prisma.fIRCase.groupBy({
-      by: ['violationType'],
-      _count: { violationType: true },
+      by: ['violation_type'],
+      _count: { violation_type: true },
       where: { 
         ...dateFilter, 
         ...userFilter,
         ...locationFilter,
         ...keywordFilter?.firCases 
       },
-      orderBy: { _count: { violationType: 'desc' } }
+      orderBy: { _count: { violation_type: 'desc' } }
     }),
 
     prisma.fIRCase.groupBy({
@@ -591,14 +593,13 @@ async function getFIRCasesReport(
     })
   ]);
 
-  // Calculate case resolution time
-  const closedCases = firCases.filter(c => c.status === 'closed');
-  const avgResolutionTime = closedCases.length 
-    ? closedCases.reduce((acc, firCase) => {
+  // Calculate case resolution time - since FIRCase doesn't have status, we'll use all cases
+  const avgResolutionTime = firCases.length 
+    ? firCases.reduce((acc, firCase) => {
         const created = new Date(firCase.createdAt);
         const updated = new Date(firCase.updatedAt);
         return acc + (updated.getTime() - created.getTime()) / (1000 * 60 * 60 * 24); // days
-      }, 0) / closedCases.length
+      }, 0) / firCases.length
     : 0;
 
   return {
@@ -608,9 +609,7 @@ async function getFIRCasesReport(
     locationBreakdown,
     analytics: {
       avgResolutionTimeDays: Math.round(avgResolutionTime),
-      resolutionRate: firCases.length 
-        ? (closedCases.length / firCases.length * 100).toFixed(1)
-        : 0
+      totalCases: firCases.length
     }
   };
 }
@@ -664,7 +663,7 @@ function getKeywordFilter(keyword?: string | null) {
     inspections: {
       OR: [
         { location: keywordCondition },
-        { officer: keywordCondition },
+        { user: { name: keywordCondition } },
         { targetType: keywordCondition }
       ]
     },
@@ -682,16 +681,16 @@ function getKeywordFilter(keyword?: string | null) {
     },
     labSamples: {
       OR: [
-        { sampleType: keywordCondition },
-        { labDestination: keywordCondition },
-        { labResult: keywordCondition }
+        { sample_desc: keywordCondition },
+        { department: keywordCondition },
+        { result_status: keywordCondition }
       ]
     },
     firCases: {
       OR: [
-        { violationType: keywordCondition },
-        { accused: keywordCondition },
-        { caseNotes: keywordCondition }
+        { violation_type: keywordCondition },
+        { accused_party: keywordCondition },
+        { remarks: keywordCondition }
       ]
     }
   };
